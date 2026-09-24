@@ -1,0 +1,171 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1130" width="800" height="1130">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600&amp;family=Inter:wght@400;600;700&amp;display=swap');
+      .header-title { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; fill: #1e1b4b; }
+      .header-sub { font-family: 'Inter', sans-serif; font-size: 10px; fill: #6b7280; }
+      .meta-label { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600; fill: #374151; }
+      .meta-val { font-family: 'Inter', sans-serif; font-size: 11px; fill: #111827; }
+      .line-num { font-family: 'Inter', sans-serif; font-size: 10px; fill: #9ca3af; text-anchor: end; }
+      .handwritten { font-family: 'Caveat', 'Segoe Print', 'Comic Sans MS', cursive; font-size: 19px; fill: #1e293b; letter-spacing: 0.3px; }
+      .title-handwritten { font-family: 'Caveat', 'Segoe Print', cursive; font-size: 20px; font-weight: bold; fill: #0f172a; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="800" height="1130" fill="#faf9f5" />
+  <rect x="15" y="15" width="770" height="1100" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5" rx="4" />
+
+  <!-- Header -->
+  <g transform="translate(30, 25)">
+    <rect x="0" y="0" width="740" height="68" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" rx="4" />
+    <circle cx="35" cy="34" r="22" fill="#FBBF24" />
+    <circle cx="35" cy="34" r="16" fill="none" stroke="#4C1D95" stroke-width="2" />
+    <circle cx="43" cy="38" r="4" fill="#4C1D95" />
+    <text x="68" y="27" class="header-title">SALINHA PRODUTIVA REDAÇÃO • PROF.ª CRISTINE TEIXEIRA</text>
+    <text x="68" y="44" class="header-sub">FOLHA OFICIAL DE TRANSCRIÇÃO DA REDAÇÃO — MODELO ENEM / VESTIBULARES</text>
+
+    <!-- Meta Fields -->
+    <rect x="0" y="74" width="740" height="52" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" rx="4" />
+    <text x="12" y="93" class="meta-label">ALUNO(A):</text>
+    <text x="75" y="93" class="meta-val" font-weight="bold">Pedro Lucas de Oliveira</text>
+    <text x="430" y="93" class="meta-label">TURMA:</text>
+    <text x="480" y="93" class="meta-val">Turma UEA Macro Intensivo</text>
+    <text x="640" y="93" class="meta-label">DATA:</text>
+    <text x="680" y="93" class="meta-val">23/09/2026</text>
+
+    <text x="12" y="115" class="meta-label">TEMA:</text>
+    <text x="55" y="115" class="meta-val">Caminhos para combater a evasão escolar no ensino médio brasileiro</text>
+  </g>
+
+  <!-- Title Line -->
+  <g transform="translate(30, 165)">
+    <line x1="40" y1="25" x2="740" y2="25" stroke="#cbd5e1" stroke-width="1" />
+    <text x="390" y="18" class="title-handwritten">A sala vazia: entre a necessidade econômica e o desamparo pedagógico</text>
+  </g>
+
+  <!-- 30 Essay Lines -->
+  <g transform="translate(30, 205)">
+    <line x1="38" y1="0" x2="38" y2="880" stroke="#fca5a5" stroke-width="1.2" stroke-dasharray="2,2" />
+    <line x1="740" y1="0" x2="740" y2="880" stroke="#fca5a5" stroke-width="0.8" stroke-dasharray="2,2" />
+
+    <!-- Line 1 -->
+    <line x1="15" y1="28" x2="740" y2="28" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="24" class="line-num">01</text>
+    <text x="80" y="24" class="handwritten">No poema "O Bicho", Manuel Bandeira denuncia a degradação humana decorrente da miséria extrema.</text>
+
+    <!-- Line 2 -->
+    <line x1="15" y1="57" x2="740" y2="57" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="53" class="line-num">02</text>
+    <text x="44" y="53" class="handwritten">Analogamente, a juventude vulnerável no Brasil hodierno vê-se compelida a abandonar os estudos</text>
+
+    <!-- Line 3 -->
+    <line x1="15" y1="86" x2="740" y2="86" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="82" class="line-num">03</text>
+    <text x="44" y="82" class="handwritten">precocemente para ingressar no mercado informal de trabalho, na busca pela subsistência familiar.</text>
+
+    <!-- Line 4 -->
+    <line x1="15" y1="115" x2="740" y2="115" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="111" class="line-num">04</text>
+    <text x="44" y="111" class="handwritten">Nesse contexto, a evasão no Ensino Médio perpetua o ciclo de pobreza e fere o preceito constitucional</text>
+
+    <!-- Line 5 -->
+    <line x1="15" y1="144" x2="740" y2="144" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="140" class="line-num">05</text>
+    <text x="44" y="140" class="handwritten">da educação como direito universal, impulsionada pela vulnerabilidade financeira e pelo desinteresse curricular.</text>
+
+    <!-- Line 6 -->
+    <line x1="15" y1="173" x2="740" y2="173" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="169" class="line-num">06</text>
+    <text x="80" y="169" class="handwritten">De início, deve-se ressaltar a urgência da subsistência imediata que sufoca aspirações futuras.</text>
+
+    <!-- Line 7 -->
+    <line x1="15" y1="202" x2="740" y2="202" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="198" class="line-num">07</text>
+    <text x="44" y="198" class="handwritten">Para o educador Paulo Freire, a pedagogia não pode estar desconectada da realidade material do estudante.</text>
+
+    <!-- Line 8 -->
+    <line x1="15" y1="231" x2="740" y2="231" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="227" class="line-num">08</text>
+    <text x="44" y="227" class="handwritten">Todavia, quando as famílias de baixa renda enfrentam a carência alimentar, os jovens sacrificam a formação</text>
+
+    <!-- Line 9 -->
+    <line x1="15" y1="260" x2="740" y2="260" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="256" class="line-num">09</text>
+    <text x="44" y="256" class="handwritten">acadêmica por bicos precarizados. Sem auxílio financeiro estatal que garanta permanência, a escola perde.</text>
+
+    <!-- Line 10 -->
+    <line x1="15" y1="289" x2="740" y2="289" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="285" class="line-num">10</text>
+    <text x="44" y="285" class="handwritten">Esse abismo empurra milhares de talentos para subempregos sem perspectiva de qualificação profissional.</text>
+
+    <!-- Line 11 -->
+    <line x1="15" y1="318" x2="740" y2="318" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="314" class="line-num">11</text>
+    <text x="80" y="314" class="handwritten">Outrossim, a obsolescência da infraestrutura escolar afasta os discentes da sala de aula.</text>
+
+    <!-- Line 12 -->
+    <line x1="15" y1="347" x2="740" y2="347" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="343" class="line-num">12</text>
+    <text x="44" y="343" class="handwritten">A falta de laboratórios modernos, tecnologia e metodologias ativas torna o ensino maçante e anacrônico.</text>
+
+    <!-- Line 13 -->
+    <line x1="15" y1="376" x2="740" y2="376" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="372" class="line-num">13</text>
+    <text x="44" y="372" class="handwritten">Consoante Gilberto Dimenstein em "O Cidadão de Papel", os direitos assegurados pela lei tornam-se inócuos</text>
+
+    <!-- Line 14 -->
+    <line x1="15" y1="405" x2="740" y2="405" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="401" class="line-num">14</text>
+    <text x="44" y="401" class="handwritten">se a prática não oferece condições dignas de vivência. O descompasso entre currículo e aspirações é fatal.</text>
+
+    <!-- Line 15 -->
+    <line x1="15" y1="434" x2="740" y2="434" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="430" class="line-num">15</text>
+    <text x="80" y="430" class="handwritten">Infere-se, portanto, a urgência de políticas estruturais de acolhimento e incentivo escolar.</text>
+
+    <!-- Line 16 -->
+    <line x1="15" y1="463" x2="740" y2="463" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="459" class="line-num">16</text>
+    <text x="44" y="459" class="handwritten">Cabe ao Ministério da Educação, em conjunto com secretarias estaduais, expandir programas de bolsas</text>
+
+    <!-- Line 17 -->
+    <line x1="15" y1="492" x2="740" y2="492" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="488" class="line-num">17</text>
+    <text x="44" y="488" class="handwritten">de permanência como o "Pé-de-Meia", aliadas à reformulação técnica e profissionalizante dos itinerários.</text>
+
+    <!-- Line 18 -->
+    <line x1="15" y1="521" x2="740" y2="521" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="517" class="line-num">18</text>
+    <text x="44" y="517" class="handwritten">Essa ação visa mitigar a evasão e assegurar que a juventude construa um porvir cidadão e emancipado.</text>
+
+    <!-- Empty lines 19 - 30 -->
+    <line x1="15" y1="550" x2="740" y2="550" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="546" class="line-num">19</text>
+    <line x1="15" y1="579" x2="740" y2="579" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="575" class="line-num">20</text>
+    <line x1="15" y1="608" x2="740" y2="608" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="604" class="line-num">21</text>
+    <line x1="15" y1="637" x2="740" y2="637" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="633" class="line-num">22</text>
+    <line x1="15" y1="666" x2="740" y2="666" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="662" class="line-num">23</text>
+    <line x1="15" y1="695" x2="740" y2="695" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="691" class="line-num">24</text>
+    <line x1="15" y1="724" x2="740" y2="724" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="720" class="line-num">25</text>
+    <line x1="15" y1="753" x2="740" y2="753" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="749" class="line-num">26</text>
+    <line x1="15" y1="782" x2="740" y2="782" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="778" class="line-num">27</text>
+    <line x1="15" y1="811" x2="740" y2="811" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="807" class="line-num">28</text>
+    <line x1="15" y1="840" x2="740" y2="840" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="836" class="line-num">29</text>
+    <line x1="15" y1="869" x2="740" y2="869" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="32" y="865" class="line-num">30</text>
+  </g>
+
+  <g transform="translate(45, 1080)">
+    <text x="0" y="0" font-family="'Inter', sans-serif" font-size="9px" fill="#9ca3af">SALINHA PRODUTIVA REDAÇÃO • DOCUMENTO DIGITAL EXCLUSIVO DO ALUNO • CÓDIGO DA REDAÇÃO: #SP-2026-880</text>
+  </g>
+</svg>

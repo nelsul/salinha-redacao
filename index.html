@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Salinha Produtiva Redação • Prof.ª Cristine Teixeira</title>
+  <link rel="icon" type="image/png" href="assets/logo.png">
+
+  <!-- Google Fonts: Inter for Clean Academic UI, Caveat for Handwriting simulation -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- =========================================================================
+       Global Interactive Role Bar: Switch between Teacher & Student views
+       ========================================================================= -->
+  <aside class="global-role-bar" aria-label="Controle de Simulação">
+    <div class="role-bar-left">
+      <span class="role-badge">Simulador Interativo</span>
+      <div class="role-switcher-buttons">
+        <button class="role-btn active" data-role="teacher">
+          <span>👩‍🏫</span> Painel Professora (Cristine)
+        </button>
+        <button class="role-btn" data-role="student">
+          <span>🎓</span> Portal do Aluno
+        </button>
+      </div>
+    </div>
+
+    <div class="role-bar-right">
+      <div class="student-select-wrap" id="student-select-wrap" style="display: none;">
+        <span>Visualizar como:</span>
+        <select id="global-student-select" aria-label="Selecione o aluno para testar o portal"></select>
+      </div>
+      <button class="btn-reset-demo" id="btn-reset-demo" title="Restaurar dados iniciais de exemplo">
+        🔄 Restaurar Dados
+      </button>
+    </div>
+  </aside>
+
+  <!-- =========================================================================
+       Brand Header
+       ========================================================================= -->
+  <header class="main-header">
+    <div class="header-content">
+      <div class="brand-wrapper">
+        <img src="assets/logo.png" class="brand-logo-img" alt="Salinha Produtiva Redação">
+        <div class="brand-info">
+          <h1>Salinha Produtiva Redação</h1>
+          <p>Prof.ª Cristine Teixeira • Foco, Técnica e Aprovação</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <div class="user-profile-badge" id="user-profile-display">
+          <!-- Populated by app.js -->
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       Navigation Bar Tabs
+       ========================================================================= -->
+  <nav class="navigation-bar" aria-label="Navegação Principal">
+    <div class="nav-container" id="nav-tabs-container">
+      <!-- Populated dynamically based on role -->
+    </div>
+  </nav>
+
+  <!-- =========================================================================
+       Main Application Dynamic Viewport
+       ========================================================================= -->
+  <main class="main-content" id="app-main">
+    <!-- Rendered dynamically by app.js -->
+  </main>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- JavaScript Modules -->
+  <script src="js/data.js"></script>
+  <script src="js/canvas-highlighter.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
