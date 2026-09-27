@@ -1,6 +1,7 @@
 /**
  * Salinha Produtiva - Interactive Canvas Essay Highlighter & Annotation Engine
  * Enables Prof.ª Cristine to highlight lines, draw annotations, and add comments on student essays.
+ * Supports smooth zooming, scrolling, panning (hand tool), and responsive high-DPI canvas rendering.
  */
 
 class EssayHighlighter {
@@ -12,17 +13,21 @@ class EssayHighlighter {
       readOnly: false,
       initialAnnotations: [],
       onAnnotationChange: null,
-      onAnnotationSelect: null
+      onAnnotationSelect: null,
+      onZoomChange: null,
+      defaultZoom: 1.0
     }, options);
 
     this.annotations = JSON.parse(JSON.stringify(this.options.initialAnnotations || []));
     this.history = [];
     this.historyIndex = -1;
 
-    this.activeTool = 'highlight'; // 'highlight' | 'brush' | 'comment' | 'eraser'
+    this.activeTool = this.options.readOnly ? 'pan' : 'highlight'; // 'highlight' | 'brush' | 'comment' | 'eraser' | 'pan'
     this.activeColor = '#FBBF24'; // Yellow by default
     this.activeCompetency = 'Geral';
     this.isDrawing = false;
+    this.isPanning = false;
+    this.isSpacePressed = false;
     this.startX = 0;
     this.startY = 0;
     this.currentStroke = null;
@@ -30,7 +35,12 @@ class EssayHighlighter {
 
     this.img = new Image();
     this.imgLoaded = false;
-    this.scale = 1.0;
+    this.zoom = this.options.defaultZoom || 1.0;
+    this.minZoom = 0.5;
+    this.maxZoom = 2.5;
+    this.baseWidth = 850; // Standard comfortable A4 width in pixels
+    this.naturalWidth = 800;
+    this.naturalHeight = 1130;
 
     this.initDOM();
     this.saveState();
@@ -38,10 +48,10 @@ class EssayHighlighter {
 
   initDOM() {
     this.container.innerHTML = `
-      <div class="highlighter-wrapper" style="position: relative; display: inline-block; user-select: none;">
-        <canvas class="highlighter-bg-canvas" style="display: block; border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);"></canvas>
-        <canvas class="highlighter-draw-canvas" style="position: absolute; top: 0; left: 0; cursor: crosshair;"></canvas>
-        <div class="highlighter-comment-layer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></div>
+      <div class="highlighter-wrapper">
+        <canvas class="highlighter-bg-canvas"></canvas>
+        <canvas class="highlighter-draw-canvas"></canvas>
+        <div class="highlighter-comment-layer"></div>
       </div>
     `;
 
@@ -53,6 +63,7 @@ class EssayHighlighter {
     this.commentLayer = this.container.querySelector('.highlighter-comment-layer');
 
     this.bindEvents();
+    this.updateCursor();
   }
 
   loadImage(src) {
@@ -61,6 +72,8 @@ class EssayHighlighter {
       this.img.crossOrigin = 'anonymous';
       this.img.onload = () => {
         this.imgLoaded = true;
+        this.naturalWidth = this.img.naturalWidth || 800;
+        this.naturalHeight = this.img.naturalHeight || 1130;
         this.resizeCanvases();
         this.renderAll();
         resolve(this.img);
@@ -76,50 +89,145 @@ class EssayHighlighter {
   resizeCanvases() {
     if (!this.imgLoaded) return;
 
-    const baseWidth = Math.min(800, this.container.clientWidth - 20 || 800);
-    const aspect = this.img.naturalHeight / this.img.naturalWidth;
-    const baseHeight = baseWidth * aspect;
+    const aspect = this.naturalHeight / this.naturalWidth;
+    const renderedWidth = Math.round(this.baseWidth * this.zoom);
+    const renderedHeight = Math.round(renderedWidth * aspect);
 
-    this.width = baseWidth;
-    this.height = baseHeight;
+    this.width = renderedWidth;
+    this.height = renderedHeight;
 
-    // Retina support
+    // High-DPI (Retina) Canvas Support
     const dpr = window.devicePixelRatio || 1;
-    this.bgCanvas.width = baseWidth * dpr;
-    this.bgCanvas.height = baseHeight * dpr;
-    this.bgCanvas.style.width = `${baseWidth}px`;
-    this.bgCanvas.style.height = `${baseHeight}px`;
-    this.bgCtx.scale(dpr, dpr);
+    this.bgCanvas.width = Math.round(renderedWidth * dpr);
+    this.bgCanvas.height = Math.round(renderedHeight * dpr);
+    this.bgCanvas.style.width = `${renderedWidth}px`;
+    this.bgCanvas.style.height = `${renderedHeight}px`;
+    this.bgCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    this.drawCanvas.width = baseWidth * dpr;
-    this.drawCanvas.height = baseHeight * dpr;
-    this.drawCanvas.style.width = `${baseWidth}px`;
-    this.drawCanvas.style.height = `${baseHeight}px`;
-    this.drawCtx.scale(dpr, dpr);
+    this.drawCanvas.width = Math.round(renderedWidth * dpr);
+    this.drawCanvas.height = Math.round(renderedHeight * dpr);
+    this.drawCanvas.style.width = `${renderedWidth}px`;
+    this.drawCanvas.style.height = `${renderedHeight}px`;
+    this.drawCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    this.wrapper.style.width = `${renderedWidth}px`;
+    this.wrapper.style.height = `${renderedHeight}px`;
+    this.commentLayer.style.width = `${renderedWidth}px`;
+    this.commentLayer.style.height = `${renderedHeight}px`;
 
     // Natural to rendered coordinate ratio
-    this.scaleX = baseWidth / this.img.naturalWidth;
-    this.scaleY = baseHeight / this.img.naturalHeight;
+    this.scaleX = renderedWidth / this.naturalWidth;
+    this.scaleY = renderedHeight / this.naturalHeight;
+  }
+
+  setZoom(newZoom, anchorClientX = null, anchorClientY = null) {
+    const clamped = Math.max(this.minZoom, Math.min(this.maxZoom, Math.round(newZoom * 100) / 100));
+    if (Math.abs(clamped - this.zoom) < 0.005) return;
+
+    const oldZoom = this.zoom;
+    const scrollArea = this.container.closest('.canvas-scroll-area');
+
+    let contentAnchorX = 0;
+    let contentAnchorY = 0;
+    let viewAnchorX = 0;
+    let viewAnchorY = 0;
+
+    if (scrollArea) {
+      if (anchorClientX !== null && anchorClientY !== null) {
+        const areaRect = scrollArea.getBoundingClientRect();
+        viewAnchorX = anchorClientX - areaRect.left;
+        viewAnchorY = anchorClientY - areaRect.top;
+      } else {
+        viewAnchorX = scrollArea.clientWidth / 2;
+        viewAnchorY = scrollArea.clientHeight / 2;
+      }
+      contentAnchorX = scrollArea.scrollLeft + viewAnchorX;
+      contentAnchorY = scrollArea.scrollTop + viewAnchorY;
+    }
+
+    this.zoom = clamped;
+    this.resizeCanvases();
+    this.renderAll();
+
+    if (scrollArea && oldZoom > 0) {
+      const scaleRatio = this.zoom / oldZoom;
+      scrollArea.scrollLeft = Math.round(contentAnchorX * scaleRatio - viewAnchorX);
+      scrollArea.scrollTop = Math.round(contentAnchorY * scaleRatio - viewAnchorY);
+    }
+
+    if (typeof this.options.onZoomChange === 'function') {
+      this.options.onZoomChange(this.zoom);
+    }
+  }
+
+  zoomIn(step = 0.15) {
+    this.setZoom(this.zoom + step);
+  }
+
+  zoomOut(step = 0.15) {
+    this.setZoom(this.zoom - step);
+  }
+
+  resetZoom() {
+    this.setZoom(1.0);
+  }
+
+  fitWidth() {
+    const scrollArea = this.container.closest('.canvas-scroll-area');
+    if (scrollArea && scrollArea.clientWidth > 0) {
+      const targetWidth = Math.max(500, scrollArea.clientWidth - 56);
+      const targetZoom = Math.round((targetWidth / this.baseWidth) * 100) / 100;
+      this.setZoom(targetZoom);
+    } else {
+      this.setZoom(1.0);
+    }
+  }
+
+  getZoom() {
+    return this.zoom;
+  }
+
+  getZoomPercent() {
+    return `${Math.round(this.zoom * 100)}%`;
   }
 
   bindEvents() {
-    if (this.options.readOnly) {
-      this.drawCanvas.style.cursor = 'default';
-      return;
-    }
+    const scrollArea = this.container.closest('.canvas-scroll-area') || this.container.parentElement;
 
     const getPos = (e) => {
       const rect = this.drawCanvas.getBoundingClientRect();
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
       return {
-        x: (clientX - rect.left) / this.scaleX,
-        y: (clientY - rect.top) / this.scaleY
+        x: Math.max(0, Math.min(this.naturalWidth, (clientX - rect.left) / this.scaleX)),
+        y: Math.max(0, Math.min(this.naturalHeight, (clientY - rect.top) / this.scaleY))
       };
     };
 
+    const isPanTrigger = (e) => {
+      return this.activeTool === 'pan' || this.options.readOnly || this.isSpacePressed || e.button === 1;
+    };
+
     const onStart = (e) => {
+      if (isPanTrigger(e) || (e.button === 0 && this.activeTool === 'pan') || e.button === 1) {
+        if (e.button === 2) return; // ignore right click
+        this.isPanning = true;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        this.panStartX = clientX;
+        this.panStartY = clientY;
+        if (scrollArea) {
+          this.panStartScrollLeft = scrollArea.scrollLeft;
+          this.panStartScrollTop = scrollArea.scrollTop;
+        }
+        this.drawCanvas.style.cursor = 'grabbing';
+        if (e.cancelable && e.type === 'touchstart') e.preventDefault();
+        return;
+      }
+
       if (this.options.readOnly) return;
+      if (e.button !== 0 && !e.touches) return;
+
       const pos = getPos(e);
       this.isDrawing = true;
       this.startX = pos.x;
@@ -144,6 +252,17 @@ class EssayHighlighter {
     };
 
     const onMove = (e) => {
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      if (this.isPanning && scrollArea) {
+        const dx = clientX - this.panStartX;
+        const dy = clientY - this.panStartY;
+        scrollArea.scrollLeft = this.panStartScrollLeft - dx;
+        scrollArea.scrollTop = this.panStartScrollTop - dy;
+        return;
+      }
+
       if (!this.isDrawing || this.options.readOnly) return;
       const pos = getPos(e);
 
@@ -156,6 +275,12 @@ class EssayHighlighter {
     };
 
     const onEnd = (e) => {
+      if (this.isPanning) {
+        this.isPanning = false;
+        this.updateCursor();
+        return;
+      }
+
       if (!this.isDrawing || this.options.readOnly) return;
       this.isDrawing = false;
       this.drawCtx.clearRect(0, 0, this.width, this.height);
@@ -164,15 +289,15 @@ class EssayHighlighter {
         const clientX = e.changedTouches ? e.changedTouches[0].clientX : (e.clientX || 0);
         const clientY = e.changedTouches ? e.changedTouches[0].clientY : (e.clientY || 0);
         const rect = this.drawCanvas.getBoundingClientRect();
-        const endX = (clientX - rect.left) / this.scaleX;
-        const endY = (clientY - rect.top) / this.scaleY;
+        const endX = Math.max(0, Math.min(this.naturalWidth, (clientX - rect.left) / this.scaleX));
+        const endY = Math.max(0, Math.min(this.naturalHeight, (clientY - rect.top) / this.scaleY));
 
         const x = Math.min(this.startX, endX);
         const y = Math.min(this.startY, endY);
         const w = Math.abs(endX - this.startX);
         const h = Math.abs(endY - this.startY);
 
-        if (w > 15 && h > 8) {
+        if (w > 12 && h > 6) {
           const ann = {
             id: 'hl-' + Date.now(),
             type: 'highlight',
@@ -197,19 +322,83 @@ class EssayHighlighter {
     };
 
     this.drawCanvas.addEventListener('mousedown', onStart);
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onEnd);
+    this._onWindowMouseMove = onMove;
+    this._onWindowMouseUp = onEnd;
+    window.addEventListener('mousemove', this._onWindowMouseMove);
+    window.addEventListener('mouseup', this._onWindowMouseUp);
 
     this.drawCanvas.addEventListener('touchstart', onStart, { passive: false });
-    window.addEventListener('touchmove', onMove, { passive: false });
-    window.addEventListener('touchend', onEnd);
+    window.addEventListener('touchmove', this._onWindowMouseMove, { passive: false });
+    window.addEventListener('touchend', this._onWindowMouseUp);
 
-    window.addEventListener('resize', () => {
+    // Ctrl + Mouse Wheel Zoom or Pinch
+    if (scrollArea) {
+      this._onWheel = (e) => {
+        if (e.ctrlKey || e.metaKey) {
+          e.preventDefault();
+          const zoomDelta = e.deltaY < 0 ? 0.12 : -0.12;
+          this.setZoom(this.zoom + zoomDelta, e.clientX, e.clientY);
+        }
+      };
+      scrollArea.addEventListener('wheel', this._onWheel, { passive: false });
+    }
+
+    // Spacebar temporary pan mode & Keyboard zoom shortcuts (+ / - / 0)
+    this._onKeyDown = (e) => {
+      if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+
+      if (e.code === 'Space' && !this.isSpacePressed) {
+        this.isSpacePressed = true;
+        this.drawCanvas.style.cursor = 'grab';
+        e.preventDefault();
+      } else if ((e.key === '+' || e.key === '=') && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        this.zoomIn();
+      } else if ((e.key === '-' || e.key === '_') && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        this.zoomOut();
+      } else if (e.key === '0' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        this.resetZoom();
+      }
+    };
+
+    this._onKeyUp = (e) => {
+      if (e.code === 'Space') {
+        this.isSpacePressed = false;
+        this.updateCursor();
+      }
+    };
+
+    window.addEventListener('keydown', this._onKeyDown);
+    window.addEventListener('keyup', this._onKeyUp);
+
+    this._onResize = () => {
       if (this.imgLoaded) {
         this.resizeCanvases();
         this.renderAll();
       }
-    });
+    };
+    window.addEventListener('resize', this._onResize);
+  }
+
+  destroy() {
+    if (this._onWindowMouseMove) {
+      window.removeEventListener('mousemove', this._onWindowMouseMove);
+      window.removeEventListener('touchmove', this._onWindowMouseMove);
+    }
+    if (this._onWindowMouseUp) {
+      window.removeEventListener('mouseup', this._onWindowMouseUp);
+      window.removeEventListener('touchend', this._onWindowMouseUp);
+    }
+    if (this._onKeyDown) window.removeEventListener('keydown', this._onKeyDown);
+    if (this._onKeyUp) window.removeEventListener('keyup', this._onKeyUp);
+    if (this._onResize) window.removeEventListener('resize', this._onResize);
+
+    const scrollArea = this.container.closest('.canvas-scroll-area');
+    if (scrollArea && this._onWheel) {
+      scrollArea.removeEventListener('wheel', this._onWheel);
+    }
   }
 
   drawHighlightPreview(x, y, w, h) {
@@ -245,7 +434,7 @@ class EssayHighlighter {
   renderAll() {
     if (!this.imgLoaded) return;
 
-    // Draw background essay image
+    // Draw background essay sheet image
     this.bgCtx.clearRect(0, 0, this.width, this.height);
     this.bgCtx.drawImage(this.img, 0, 0, this.width, this.height);
 
@@ -267,7 +456,8 @@ class EssayHighlighter {
         // Competency tag badge on top corner
         if (ann.label) {
           this.bgCtx.fillStyle = ann.color;
-          this.bgCtx.fillRect(rx, ry - 14, Math.min(rw, 90), 14);
+          const badgeW = Math.min(rw, 95);
+          this.bgCtx.fillRect(rx, ry - 14, badgeW, 14);
           this.bgCtx.fillStyle = '#ffffff';
           this.bgCtx.font = 'bold 9px Inter, sans-serif';
           this.bgCtx.fillText(ann.label.substring(0, 14), rx + 4, ry - 3);
@@ -377,7 +567,6 @@ class EssayHighlighter {
   }
 
   promptAnnotationDetails(ann) {
-    // Optional comment directly attached to the highlighted block
     const comment = prompt('Comentário ou dica para este trecho destacado (opcional):');
     if (comment && comment.trim() !== '') {
       ann.comment = comment.trim();
@@ -392,6 +581,8 @@ class EssayHighlighter {
         return x >= a.x && x <= a.x + a.w && y >= a.y && y <= a.y + a.h;
       } else if (a.type === 'comment') {
         return Math.hypot(x - a.x, y - a.y) < 25;
+      } else if (a.type === 'brush' && a.points) {
+        return a.points.some(p => Math.hypot(x - p.x, y - p.y) < 20);
       }
       return false;
     });
@@ -418,7 +609,6 @@ class EssayHighlighter {
   }
 
   saveState() {
-    // Truncate redo stack if new action is taken
     this.history = this.history.slice(0, this.historyIndex + 1);
     this.history.push(JSON.parse(JSON.stringify(this.annotations)));
     this.historyIndex++;
@@ -442,6 +632,23 @@ class EssayHighlighter {
 
   setTool(tool) {
     this.activeTool = tool;
+    this.updateCursor();
+  }
+
+  updateCursor() {
+    if (this.options.readOnly) {
+      this.drawCanvas.style.cursor = this.isPanning ? 'grabbing' : 'grab';
+      return;
+    }
+    if (this.activeTool === 'pan') {
+      this.drawCanvas.style.cursor = this.isPanning ? 'grabbing' : 'grab';
+    } else if (this.activeTool === 'comment') {
+      this.drawCanvas.style.cursor = 'pointer';
+    } else if (this.activeTool === 'eraser') {
+      this.drawCanvas.style.cursor = 'cell';
+    } else {
+      this.drawCanvas.style.cursor = 'crosshair';
+    }
   }
 
   setColor(color, label = '') {
