@@ -990,6 +990,9 @@ document.addEventListener('DOMContentLoaded', () => {
                   <button class="tool-btn" data-tool="eraser" title="Borracha">
                     🧹 Apagar
                   </button>
+                  <button class="tool-btn" data-tool="pan" title="Mão para arrastar e rolar a folha (atalho: segure a Barra de Espaço)">
+                    ✋ Mover
+                  </button>
                 </div>
 
                 <!-- Competency Color Palettes for Highlighter -->
@@ -1005,8 +1008,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
               </div>
 
-              <!-- History actions -->
-              <div style="display: flex; align-items: center; gap: 6px;">
+              <!-- History & Zoom actions -->
+              <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                <!-- Zoom Controls -->
+                <div class="zoom-toolbar-group">
+                  <button class="btn btn-outline btn-sm btn-icon" id="btn-canvas-zoom-out" title="Afastar (Zoom -)">🔍−</button>
+                  <button class="btn btn-outline btn-sm zoom-value-btn" id="btn-canvas-zoom-reset" title="Restaurar tamanho padrão 100% (Ctrl+0)">100%</button>
+                  <button class="btn btn-outline btn-sm btn-icon" id="btn-canvas-zoom-in" title="Aproximar (Zoom +)">🔍+</button>
+                  <button class="btn btn-outline btn-sm" id="btn-canvas-zoom-fit" title="Ajustar à largura da tela">⛶ Ajustar</button>
+                </div>
+
+                <div class="toolbar-divider"></div>
+
                 <button class="btn btn-outline btn-sm" id="btn-canvas-undo" title="Desfazer (Ctrl+Z)">↩️</button>
                 <button class="btn btn-outline btn-sm" id="btn-canvas-redo" title="Refazer">↪️</button>
                 <button class="btn btn-outline btn-sm" id="btn-canvas-clear" style="color: var(--danger);" title="Limpar todas as marcações">🗑️</button>
@@ -1016,6 +1029,19 @@ document.addEventListener('DOMContentLoaded', () => {
             <!-- Scrollable Canvas Viewer -->
             <div class="canvas-scroll-area">
               <div id="essay-canvas-container"></div>
+            </div>
+
+            <!-- Floating Zoom Dock & Navigation Hint -->
+            <div class="canvas-floating-controls">
+              <div class="floating-zoom-badge">
+                <button type="button" class="btn-zoom-float" id="btn-float-zoom-out" title="Afastar (−)">−</button>
+                <span class="zoom-percent-display" id="float-zoom-percent">100%</span>
+                <button type="button" class="btn-zoom-float" id="btn-float-zoom-in" title="Aproximar (+)">+</button>
+                <button type="button" class="btn-zoom-float" id="btn-float-zoom-fit" title="Ajustar à tela">⛶</button>
+              </div>
+              <div class="floating-pan-hint">
+                <span>💡 Rolar: rodinha do mouse | Zoom: Ctrl + Rodinha</span>
+              </div>
             </div>
           </div>
 
@@ -1094,6 +1120,7 @@ document.addEventListener('DOMContentLoaded', () => {
     currentHighlighter = new EssayHighlighter('essay-canvas-container', {
       initialAnnotations: redacao.annotations || []
     });
+    window.currentHighlighter = currentHighlighter;
 
     currentHighlighter.loadImage(redacao.imagemUrl || 'assets/mock-essays/redacao-enem-sofia.svg');
 
@@ -1117,6 +1144,28 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-canvas-undo').addEventListener('click', () => currentHighlighter.undo());
     document.getElementById('btn-canvas-redo').addEventListener('click', () => currentHighlighter.redo());
     document.getElementById('btn-canvas-clear').addEventListener('click', () => currentHighlighter.clear());
+
+    // Zoom Controls & Indicators
+    const updateTeacherZoomDisplay = () => {
+      const zoomText = currentHighlighter.getZoomPercent();
+      const zoomResetBtn = modal.querySelector('#btn-canvas-zoom-reset');
+      const floatZoomText = modal.querySelector('#float-zoom-percent');
+      if (zoomResetBtn) zoomResetBtn.textContent = zoomText;
+      if (floatZoomText) floatZoomText.textContent = zoomText;
+    };
+
+    currentHighlighter.options.onZoomChange = () => {
+      updateTeacherZoomDisplay();
+    };
+
+    modal.querySelector('#btn-canvas-zoom-in')?.addEventListener('click', () => currentHighlighter.zoomIn());
+    modal.querySelector('#btn-canvas-zoom-out')?.addEventListener('click', () => currentHighlighter.zoomOut());
+    modal.querySelector('#btn-canvas-zoom-reset')?.addEventListener('click', () => currentHighlighter.resetZoom());
+    modal.querySelector('#btn-canvas-zoom-fit')?.addEventListener('click', () => currentHighlighter.fitWidth());
+
+    modal.querySelector('#btn-float-zoom-in')?.addEventListener('click', () => currentHighlighter.zoomIn());
+    modal.querySelector('#btn-float-zoom-out')?.addEventListener('click', () => currentHighlighter.zoomOut());
+    modal.querySelector('#btn-float-zoom-fit')?.addEventListener('click', () => currentHighlighter.fitWidth());
 
     // Bind Competency Score Buttons
     modal.querySelectorAll('.score-radio-btn').forEach(btn => {
@@ -1166,6 +1215,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Close Modal
     document.getElementById('btn-close-correction-workspace').addEventListener('click', () => {
+      currentHighlighter?.destroy();
       modal.remove();
     });
 
@@ -1181,6 +1231,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const comentarios = document.getElementById('prof-general-comments').value;
       const annotations = currentHighlighter.getAnnotations();
 
+      currentHighlighter?.destroy();
       store.saveCorrecao(redacaoId, { c1, c2, c3, c4, c5, total }, comentarios, annotations);
       modal.remove();
       renderApp();
@@ -1188,6 +1239,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('btn-save-draft').addEventListener('click', () => {
+      currentHighlighter?.destroy();
       showToast('Rascunho de anotações salvo localmente.');
       modal.remove();
     });
@@ -1248,15 +1300,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span>🖍️ Folha de Redação Corrigida</span>
                 <span style="font-size: 11px; font-weight: normal; color: var(--slate-600);">(Passe o mouse ou clique nas marcações coloridas para ver as dicas da professora)</span>
               </div>
-              <div style="display: flex; gap: 8px;">
-                <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #047857;">🟢 Ponto Forte</span>
-                <span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #1d4ed8;">🔵 Argumentação</span>
-                <span class="badge" style="background: rgba(139, 92, 246, 0.2); color: #6d28d9;">🟣 Intervenção C5</span>
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <!-- Student Zoom Controls -->
+                <div class="zoom-toolbar-group">
+                  <button class="btn btn-outline btn-sm btn-icon" id="btn-student-zoom-out" title="Afastar (Zoom -)">🔍−</button>
+                  <button class="btn btn-outline btn-sm zoom-value-btn" id="btn-student-zoom-reset" title="Restaurar tamanho padrão 100% (Ctrl+0)">100%</button>
+                  <button class="btn btn-outline btn-sm btn-icon" id="btn-student-zoom-in" title="Aproximar (Zoom +)">🔍+</button>
+                  <button class="btn btn-outline btn-sm" id="btn-student-zoom-fit" title="Ajustar à largura da tela">⛶ Ajustar</button>
+                </div>
+
+                <div class="toolbar-divider"></div>
+
+                <div style="display: flex; gap: 6px;">
+                  <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #047857;">🟢 Ponto Forte</span>
+                  <span class="badge" style="background: rgba(59, 130, 246, 0.2); color: #1d4ed8;">🔵 Argumentação</span>
+                  <span class="badge" style="background: rgba(139, 92, 246, 0.2); color: #6d28d9;">🟣 Intervenção C5</span>
+                </div>
               </div>
             </div>
 
             <div class="canvas-scroll-area">
               <div id="student-view-canvas-container"></div>
+            </div>
+
+            <!-- Floating Zoom Dock & Navigation Hint -->
+            <div class="canvas-floating-controls">
+              <div class="floating-zoom-badge">
+                <button type="button" class="btn-zoom-float" id="btn-student-float-zoom-out" title="Afastar (−)">−</button>
+                <span class="zoom-percent-display" id="student-float-zoom-percent">100%</span>
+                <button type="button" class="btn-zoom-float" id="btn-student-float-zoom-in" title="Aproximar (+)">+</button>
+                <button type="button" class="btn-zoom-float" id="btn-student-float-zoom-fit" title="Ajustar à tela">⛶</button>
+              </div>
+              <div class="floating-pan-hint">
+                <span>💡 Arraste com o mouse para mover | Ctrl + Rodinha para zoom</span>
+              </div>
             </div>
           </div>
 
@@ -1363,6 +1440,28 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     hl.loadImage(redacao.imagemUrl || 'assets/mock-essays/redacao-enem-sofia.svg');
 
+    // Zoom event bindings for student view
+    const updateStudentZoomDisplay = () => {
+      const zoomText = hl.getZoomPercent();
+      const zoomResetBtn = modal.querySelector('#btn-student-zoom-reset');
+      const floatZoomText = modal.querySelector('#student-float-zoom-percent');
+      if (zoomResetBtn) zoomResetBtn.textContent = zoomText;
+      if (floatZoomText) floatZoomText.textContent = zoomText;
+    };
+
+    hl.options.onZoomChange = () => {
+      updateStudentZoomDisplay();
+    };
+
+    modal.querySelector('#btn-student-zoom-in')?.addEventListener('click', () => hl.zoomIn());
+    modal.querySelector('#btn-student-zoom-out')?.addEventListener('click', () => hl.zoomOut());
+    modal.querySelector('#btn-student-zoom-reset')?.addEventListener('click', () => hl.resetZoom());
+    modal.querySelector('#btn-student-zoom-fit')?.addEventListener('click', () => hl.fitWidth());
+
+    modal.querySelector('#btn-student-float-zoom-in')?.addEventListener('click', () => hl.zoomIn());
+    modal.querySelector('#btn-student-float-zoom-out')?.addEventListener('click', () => hl.zoomOut());
+    modal.querySelector('#btn-student-float-zoom-fit')?.addEventListener('click', () => hl.fitWidth());
+
     // Audio Play simulation
     let isPlaying = false;
     const playBtn = modal.querySelector('#btn-play-audio-feedback');
@@ -1373,7 +1472,10 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast(isPlaying ? 'Reproduzindo áudio da mentoria da Prof.ª Cristine...' : 'Áudio pausado.');
     });
 
-    modal.querySelector('#btn-close-student-feedback').addEventListener('click', () => modal.remove());
+    modal.querySelector('#btn-close-student-feedback').addEventListener('click', () => {
+      hl.destroy();
+      modal.remove();
+    });
   }
 
   // =========================================================================
@@ -1745,4 +1847,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   window.showToast = showToast;
+  window.openCorrectionWorkspace = openCorrectionWorkspace;
+  window.openStudentFeedbackModal = openStudentFeedbackModal;
 });
